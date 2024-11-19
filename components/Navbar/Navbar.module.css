@@ -1,0 +1,9 @@
+/* Navbar.module.css */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+}
+
+.closeIcon {
+  margin: 8px;
+}
