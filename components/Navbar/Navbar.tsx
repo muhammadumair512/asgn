@@ -144,7 +144,7 @@ const Navbar: React.FC = () => {
           <Box className={styles.logoContainer}>
             <NavLink to="/" className={styles.logoLink}>
               <img
-                src="../../public/Creative.png" // Replace with your logo path
+                src="https://res.cloudinary.com/dtra3fmqb/image/upload/v1732991149/Creative_cjj4ei.png" // Replace with your logo path
                 alt="Brand Logo"
                 className={styles.logo}
               />
