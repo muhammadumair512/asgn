@@ -1,0 +1,18 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 250px;
+  background-color: #100a06;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.button {
+  background-color: #96160a !important;
+  color: white !important;
+  margin-bottom: 16px;
+  text-transform: capitalize;
+}
