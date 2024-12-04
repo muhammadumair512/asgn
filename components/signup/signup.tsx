@@ -87,7 +87,7 @@ const Signup: React.FC = () => {
           .omit({ username: true })
           .parse(formData);
 
-        const loggedInUser = await loginUser(
+        await loginUser(
           validatedData.email,
           validatedData.password,
           stayLoggedIn
