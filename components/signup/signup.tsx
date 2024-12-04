@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import styles from "./signup.module.css";
+
 import {
   Box,
   TextField,
@@ -8,7 +10,6 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import styles from "./Signup.module.css";
 import { z } from "zod";
 import {
   fetchAllUsers,
