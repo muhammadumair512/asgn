@@ -1,18 +1,69 @@
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 250px;
-  background-color: #100a06;
+/* Sidebar.module.css */
+
+/* Container for the sidebar */
+.container {
+  width: 300px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f4f4f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Heading */
+.heading {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #6200ea;
+  margin-bottom: 20px;
+}
+
+/* User list */
+.userList {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.userItem {
+  padding: 10px;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.userItem:hover {
+  background-color: #f0f0ff;
+}
+
+/* Form styles */
+.form {
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  gap: 10px;
+}
+
+.input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
 }
 
 .button {
-  background-color: #96160a !important;
-  color: white !important;
-  margin-bottom: 16px;
-  text-transform: capitalize;
+  padding: 10px;
+  border: none;
+  background-color: #6200ea;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #4500b0;
 }

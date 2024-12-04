@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
@@ -20,6 +20,9 @@ import { styled } from "@mui/material/styles";
 import styles from "./Navbar.module.css";
 import { NavLink } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Cookies from "js-cookie";
+import { logoutUser } from "../../services/userService"; // Assuming you have this method in userService
+
 const theme = createTheme({
   shape: {
     borderRadius: 28, // Set default border radius to 8px
@@ -64,6 +67,16 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const session = Cookies.get("session");
+    if (session) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
 
   const toggleDrawer = (open: boolean) => () => {
     setMobileOpen(open);
@@ -109,7 +122,7 @@ const Navbar: React.FC = () => {
         </ListItem>
         <ListItem
           component="a"
-          href="/login"
+          href="/"
           style={{ cursor: "pointer", color: "black", textDecoration: "none" }}
         >
           <ListItemIcon>
@@ -120,6 +133,11 @@ const Navbar: React.FC = () => {
       </List>
     </Box>
   );
+
+  const handleLogout = () => {
+    logoutUser();
+    setIsLoggedIn(false); // Update state after logging out
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -188,7 +206,6 @@ const Navbar: React.FC = () => {
               gap: 2,
             }}
           >
-            {" "}
             <NavLink
               to="/favourite"
               className={({ isActive }) =>
@@ -223,18 +240,31 @@ const Navbar: React.FC = () => {
             </NavLink>
           </Box>
 
-          {/* Right: Login Button */}
+          {/* Right: Login/Logout Button */}
           <Box sx={{ display: { xs: "none", sm: "flex" } }}>
-            <Button
-              style={{
-                color: "#5f9ea0",
-                border: "1px solid #5f9ea0",
-                width: 100,
-              }}
-              href="/login"
-            >
-              Login
-            </Button>
+            {isLoggedIn ? (
+              <Button
+                style={{
+                  color: "#5f9ea0",
+                  border: "1px solid #5f9ea0",
+                  width: 100,
+                }}
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+            ) : (
+              <Button
+                style={{
+                  color: "#5f9ea0",
+                  border: "1px solid #5f9ea0",
+                  width: 100,
+                }}
+                href="/"
+              >
+                Login
+              </Button>
+            )}
           </Box>
         </Toolbar>
       </AppBar>
