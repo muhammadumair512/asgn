@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { getUserDataFromLocalStorage } from "../../services/userService";
 import {
   Box,
   Typography,
@@ -9,7 +10,7 @@ import {
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import WatchLaterIcon from "@mui/icons-material/WatchLater";
 import styles from "./Movies.module.css";
-import { fetchAllMovies, verifyCookie } from "../../services/userService";
+import { fetchAllMovies } from "../../services/userService";
 
 interface Movie {
   id: number;
@@ -22,17 +23,9 @@ interface Movie {
 
 const Movies: React.FC = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [isCookieValid, setIsCookieValid] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
-    const checkCookies = async () => {
-      const sessionID = localStorage.getItem("session"); // Retrieve session ID from localStorage
-      if (sessionID) {
-        const valid = verifyCookie(sessionID); // Verify the cookie
-        setIsCookieValid(valid); // Update state based on verification result
-      }
-    };
-
     const loadMovies = async () => {
       try {
         const data = await fetchAllMovies();
@@ -45,7 +38,14 @@ const Movies: React.FC = () => {
       }
     };
 
-    checkCookies();
+    const getUserDetails = () => {
+      const user = getUserDataFromLocalStorage(); // Retrieve logged-in user data
+      if (user) {
+        setUserData(user);
+      }
+    };
+
+    getUserDetails();
     loadMovies();
   }, []);
 
@@ -84,16 +84,24 @@ const Movies: React.FC = () => {
               {movie.description}
             </Typography>
             {/* Action Buttons */}
-            {isCookieValid && ( // Only render if cookies are valid
+            {userData && ( // Only render if userData is available (i.e., user is logged in)
               <Box className={styles.footer}>
                 <IconButton>
                   <FavoriteBorderIcon
-                    style={{ color: movie.liked ? "red" : "white" }}
+                    style={{
+                      fill: userData.likedMovies.includes(movie.id)
+                        ? "red"
+                        : "white",
+                    }}
                   />
                 </IconButton>
                 <IconButton>
                   <WatchLaterIcon
-                    style={{ color: movie.liked ? "red" : "white" }}
+                    style={{
+                      fill: userData.watchLater.includes(movie.id)
+                        ? "red"
+                        : "white",
+                    }}
                   />
                 </IconButton>
               </Box>

@@ -42,6 +42,24 @@ app.get("/users", async (req, res) => {
   const users = await User.find();
   res.json(users);
 });
+// GET route to fetch user data by email
+app.get("/users/email/:email", async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    if (user) {
+      res.json(user); // Send user data
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching user by email:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 app.post("/users/login", async (req, res) => {
   const { email, password } = req.body;
@@ -69,6 +87,28 @@ app.post("/users", async (req, res) => {
   const newUser = new User(req.body);
   await newUser.save();
   res.status(201).json(newUser);
+});
+
+app.get("/users/me", async (req, res) => {
+  const cookies = new Cookies(req, res);
+  const sessionID = cookies.get("session"); // Get session ID from cookies
+
+  if (!sessionID) {
+    return res.status(401).json({ error: "No session ID found" }); // No session ID found in cookies
+  }
+
+  try {
+    const user = await User.findOne({ cookieSession: sessionID }); // Find user by session ID
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" }); // No user found with the session ID
+    }
+
+    res.json(user); // Send back the user data
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 // Define the port

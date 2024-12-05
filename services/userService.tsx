@@ -1,9 +1,8 @@
 import axios from "axios";
-
-const API_BASE_URL = "http://localhost:5000"; // Replace with your server URL
-
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid"; // For generating unique session IDs
+
+const API_BASE_URL = "http://localhost:5000"; // Replace with your server URL
 
 // Function to set a cookie, generate a session ID, and return the session ID
 export const setCookie = (stayLoggedIn: boolean): string => {
@@ -23,6 +22,7 @@ export const setCookie = (stayLoggedIn: boolean): string => {
 export const removeCookie = (): void => {
   try {
     Cookies.remove("session", { path: "/" }); // Remove the session cookie
+    localStorage.removeItem("userData"); // Remove user data from localStorage
     console.log("Session cookie removed successfully.");
   } catch (error) {
     console.error("Error removing session cookie:", error);
@@ -88,20 +88,82 @@ export const fetchAllUsers = async (): Promise<User[]> => {
   }
 };
 
-// User login (validate email and password, create session cookie)
-// Updated loginUser function
+let data: User | null = null; // Keep track of the logged-in user data
+
+// Function to fetch full user data by email immediately after login
+
+// const { user, setUser } = UseData();
+export const fetchUserDataByEmail = async (email: string): Promise<User> => {
+  try {
+    console.log(`Attempting to fetch user with email: ${email}`);
+    const response = await axios.get(`${API_BASE_URL}/users/email/${email}`);
+    const userData: User = response.data;
+    console.log("Fetched user data successfully:", userData);
+
+    // Save the user data to local storage
+    localStorage.setItem("userData", JSON.stringify(userData));
+
+    return userData;
+  } catch (error: any) {
+    if (error.response) {
+      // Server responded with a status other than 2xx
+      console.error(
+        `Error fetching user data. Status: ${error.response.status}, Message: ${error.response.data.message}`
+      );
+    } else if (error.request) {
+      // Request was made but no response was received
+      console.error("No response received from server:", error.request);
+    } else {
+      // Other errors
+      console.error("Error setting up request:", error.message);
+    }
+    throw error;
+  }
+};
+export const removeUserDataFromLocalStorage = (): void => {
+  try {
+    localStorage.removeItem("userData"); // Remove user data from local storage
+    console.log("User data removed from local storage successfully.");
+  } catch (error) {
+    console.error("Error removing user data from local storage:", error);
+  }
+};
+export const getUserDataFromLocalStorage = (): User | null => {
+  try {
+    const storedUserData = localStorage.getItem("userData");
+
+    if (storedUserData) {
+      // Parse the stored data to return as User object
+      const loginuserData: User = JSON.parse(storedUserData);
+      console.log("Retrieved user data from local storage:", loginuserData);
+      return loginuserData;
+    } else {
+      console.log("No user data found in local storage.");
+      return null; // Return null if no user data is found
+    }
+  } catch (error) {
+    console.error("Error retrieving user data from local storage:", error);
+    return null; // Return null if an error occurs
+  }
+};
+
+// Updated login function
 export const loginUser = async (
   email: string,
   password: string,
   stayLoggedIn: boolean
 ): Promise<User> => {
   try {
+    console.log(`Logging in with email: ${email} and password: ${password}`);
+
+    // Make the login request
     const response = await axios.post(`${API_BASE_URL}/users/login`, {
       email,
       password,
     });
 
     const loggedInUser: User = response.data;
+    console.log("Login successful:", loggedInUser);
 
     // Use the setCookie function to handle cookie creation
     const sessionID = setCookie(stayLoggedIn); // Generate and set the cookie
@@ -109,10 +171,27 @@ export const loginUser = async (
       `Session cookie set successfully for user: ${loggedInUser.email}, Session ID: ${sessionID}`
     );
 
-    return loggedInUser;
-  } catch (error) {
-    console.error("Error logging in user:", error);
-    throw error;
+    // Fetch additional user data based on the logged-in user's email
+    const user1 = fetchUserDataByEmail(email);
+    return user1;
+    // Update the context state with user data
+    // const { setUser } = UseData(); // Destructure setUser from the UseData hook
+    // setUser(fullUserData); // Update the context with the fetched user data
+
+    // Save user data in localStorage if the user chooses to stay logged in
+    // if (stayLoggedIn) {
+    //   localStorage.setItem("userData", JSON.stringify(fullUserData)); // Save full user data to localStorage
+    // }
+
+    // Return the full user data
+  } catch (error: any) {
+    console.error("Error logging in user:", error.message);
+    if (error.response) {
+      console.error(
+        `Error status: ${error.response.status}, Message: ${error.response.data}`
+      );
+    }
+    throw error; // Re-throw the error for the calling function to handle
   }
 };
 
@@ -138,6 +217,11 @@ export const createUser = async (
     Cookies.set("session", session, cookieOptions);
     console.log("Session cookie set successfully for new user.");
 
+    // Save user data in localStorage if the user chooses to stay logged in
+    if (stayLoggedIn) {
+      localStorage.setItem("userData", JSON.stringify(createdUser)); // Save user data to localStorage
+    }
+
     return createdUser;
   } catch (error) {
     console.error("Error creating user:", error);
@@ -145,32 +229,44 @@ export const createUser = async (
   }
 };
 
-// Verify session (validate session cookie on the server)
-export const verifySession = async (): Promise<User | null> => {
-  try {
-    const session = Cookies.get("session");
-    if (!session) {
-      console.log("No session cookie found.");
+// Get currently logged-in user data
+export const getUserData = (): User | null => {
+  const sessionID = Cookies.get("session"); // Get session ID from cookie
+  if (!sessionID) {
+    console.log("No session cookie found.");
+    return null; // Return null if no session is found
+  }
+
+  // Check if the data is available in memory first
+  if (data) {
+    return data; // Return the user data stored in memory
+  }
+
+  // Otherwise, check localStorage
+  const storedUserData = localStorage.getItem("userData");
+  if (storedUserData) {
+    const userData: User = JSON.parse(storedUserData);
+    if (userData.cookieSession === sessionID) {
+      data = userData; // Store the user data in memory
+      return userData;
+    } else {
+      console.log("Session ID mismatch with localStorage user data.");
       return null;
     }
-
-    const response = await axios.post(`${API_BASE_URL}/users/verify-session`, {
-      session,
-    });
-
-    console.log("Session verification successful.");
-    return response.data; // Return the user object if the session is valid
-  } catch (error) {
-    console.error("Error verifying session:", error);
-    return null; // Return null if verification fails
   }
+
+  console.log("No user data found in localStorage.");
+  return null; // Return null if no user data is found
 };
 
-// Logout user (clear session cookie)
+// Logout user (clear session cookie and localStorage)
 export const logoutUser = (): void => {
   try {
     Cookies.remove("session", { path: "/" }); // Remove session cookie
-    console.log("Session cookie removed successfully.");
+    localStorage.removeItem("userData"); // Remove user data from localStorage
+    data = null; // Clear in-memory user data
+    removeUserDataFromLocalStorage();
+    console.log("User logged out successfully.");
   } catch (error) {
     console.error("Error logging out user:", error);
   }

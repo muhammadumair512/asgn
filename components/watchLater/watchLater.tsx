@@ -1,26 +1,44 @@
-// import React from "react";
+import { useState, useEffect } from "react";
 import { Box, Typography, IconButton, useMediaQuery } from "@mui/material";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import WatchLaterIcon from "@mui/icons-material/WatchLater";
 import { useTheme } from "@mui/material/styles";
 import styles from "./watchLater.module.css";
-
-// Dummy movie data
-const data = [
-  {
-    id: 4,
-    title: "The Matrix",
-    imageURL: "https://via.placeholder.com/300x400",
-    description: "Enter the digital world of the Matrix.",
-    category: "Sci-Fi",
-    liked: true,
-  },
-];
+import {
+  getUserDataFromLocalStorage,
+  fetchAllMovies,
+} from "../../services/userService";
 
 const WatchLater = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+
+  const [userData, setUserData] = useState<any>(null);
+  const [movies, setMovies] = useState<any[]>([]); // Initialize as an array
+
+  // Fetch user details and movies when the component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      const user = getUserDataFromLocalStorage(); // Retrieve logged-in user data
+      const moviesData = await fetchAllMovies(); // Fetch all movies
+
+      if (user) {
+        setUserData(user);
+      }
+
+      if (moviesData) {
+        setMovies(moviesData); // Set the fetched movies
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Filter the movies to only show those in the user's watchLater list
+  const filteredMovies = movies.filter((movie) =>
+    userData?.watchLater?.includes(movie.id)
+  );
 
   return (
     <Box className={styles.container}>
@@ -36,37 +54,49 @@ const WatchLater = () => {
         }
         gap={theme.spacing(2)} // Ensures consistent spacing
       >
-        {data.map((movie) => (
-          <Box key={movie.id} className={styles.movieCard}>
-            {/* Title */}
-            <Typography variant="h6" className={styles.title}>
-              {movie.title}
-            </Typography>
-            {/* Image */}
-            <img
-              src={movie.imageURL}
-              alt={movie.title}
-              className={styles.image}
-            />
-            {/* Description */}
-            <Typography className={styles.description}>
-              {movie.description}
-            </Typography>
-            {/* Buttons */}
-            <Box className={styles.footer}>
-              <IconButton>
-                <FavoriteBorderIcon
-                  style={{ color: movie.liked ? "red" : "white" }}
-                />
-              </IconButton>
-              <IconButton>
-                <WatchLaterIcon
-                  style={{ color: movie.liked ? "red" : "white" }}
-                />
-              </IconButton>
+        {filteredMovies.length > 0 ? (
+          filteredMovies.map((movie) => (
+            <Box key={movie.id} className={styles.movieCard}>
+              {/* Title */}
+              <Typography variant="h6" className={styles.title}>
+                {movie.title}
+              </Typography>
+              {/* Image */}
+              <img
+                src={movie.imageURL}
+                alt={movie.title}
+                className={styles.image}
+              />
+              {/* Description */}
+              <Typography className={styles.description}>
+                {movie.description}
+              </Typography>
+              {/* Buttons */}
+              <Box className={styles.footer}>
+                <IconButton>
+                  <FavoriteBorderIcon
+                    style={{
+                      color: userData.likedMovies.includes(movie.id)
+                        ? "red"
+                        : "white",
+                    }}
+                  />
+                </IconButton>
+                <IconButton>
+                  <WatchLaterIcon
+                    style={{
+                      color: userData.watchLater.includes(movie.id)
+                        ? "red"
+                        : "white",
+                    }}
+                  />
+                </IconButton>
+              </Box>
             </Box>
-          </Box>
-        ))}
+          ))
+        ) : (
+          <Typography variant="h6">No movies in Watch Later list</Typography>
+        )}
       </Box>
     </Box>
   );
