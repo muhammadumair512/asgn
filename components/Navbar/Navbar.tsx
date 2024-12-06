@@ -9,163 +9,121 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import InputBase from "@mui/material/InputBase";
 import Menu from "@mui/icons-material/Menu";
 import Close from "@mui/icons-material/Close";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import WatchLaterIcon from "@mui/icons-material/WatchLater";
-// import LoginIcon from "@mui/icons-material/Login";
 import HomeIcon from "@mui/icons-material/Home";
-import SearchIcon from "@mui/icons-material/Search";
-import { styled } from "@mui/material/styles";
+import LogoutIcon from "@mui/icons-material/Logout";
+import LoginIcon from "@mui/icons-material/Login";
 import styles from "./Navbar.module.css";
 import { NavLink } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Cookies from "js-cookie";
-import { logoutUser } from "../../services/userService"; // Assuming you have this method in userService
+import { logoutUser } from "../../services/userService";
 import { useDataContext } from "../../dataContext";
+
 const theme = createTheme({
   shape: {
     borderRadius: 28, // Set default border radius
   },
 });
 
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  color: "white",
-  border: "1px solid white",
-  borderRadius: theme.shape.borderRadius,
-  marginRight: theme.spacing(2),
-  marginLeft: theme.spacing(2),
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    width: "auto",
-  },
-}));
-
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "white",
-  "&::placeholder": {
-    color: "white",
-  },
-  padding: theme.spacing(1, 1, 1, 0),
-  paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-  width: "100%",
-  [theme.breakpoints.up("md")]: {
-    width: "20ch",
-  },
-}));
-
 const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { user } = useDataContext();
+
   useEffect(() => {
-    // console.log(user);
     const checkSessionCookie = () => {
-      console.log("this is navbar", user);
       const session = Cookies.get("session");
-      setIsLoggedIn(!!session); // Update login state based on session cookie
+      setIsLoggedIn(!!session);
     };
-
-    // Initial check when the component mounts
     checkSessionCookie();
-
-    // Set up an interval to check for cookie changes every second
-    // const interval = setInterval(checkSessionCookie, 1000);
-
-    // Cleanup interval on component unmount
-    // return () => clearInterval(interval);
   }, [user]);
 
   const toggleDrawer = (open: boolean) => () => {
     setMobileOpen(open);
   };
 
+  const handleLogout = () => {
+    logoutUser();
+    setIsLoggedIn(false);
+  };
+
   const drawerContent = (
-    <Box sx={{ width: 250, textAlign: "left" }}>
-      <Box sx={{ width: 250, textAlign: "right" }}>
+    <Box sx={{ width: 200, textAlign: "left" }} className={styles.drawer}>
+      <Box sx={{ textAlign: "right", padding: 1 }}>
         <IconButton onClick={toggleDrawer(false)} className={styles.closeIcon}>
           <Close />
         </IconButton>
       </Box>
-      <List>
-        {isLoggedIn ? (
-          <>
-            <ListItem component="a">
-              <NavLink
-                to="/favourite"
-                className={({ isActive }) =>
-                  isActive
-                    ? `${styles.active} ${styles.navLink}`
-                    : `${styles.inActive} ${styles.navLink}`
-                }
-              >
-                <ListItemIcon>
-                  <FavoriteIcon />
-                </ListItemIcon>
-                <ListItemText primary="Favourite" className={styles.listItem} />
-              </NavLink>
-            </ListItem>
-            <ListItem component="a">
-              <NavLink
-                to="/watchLater"
-                className={({ isActive }) =>
-                  isActive
-                    ? `${styles.active} ${styles.navLink}`
-                    : `${styles.inActive} ${styles.navLink}`
-                }
-              >
-                <ListItemIcon>
-                  <WatchLaterIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Watch Later"
-                  className={styles.listItem}
-                />
-              </NavLink>
-            </ListItem>
-          </>
-        ) : (
-          <ListItem
-            component="a"
-            href="/"
-            style={{
-              cursor: "pointer",
-              color: "black",
-              textDecoration: "none",
-            }}
+      <List className={styles.list}>
+        <ListItem>
+          <NavLink
+            to="/home"
+            className={({ isActive }) =>
+              isActive ? styles.active : styles.inactive
+            }
           >
             <ListItemIcon>
               <HomeIcon />
             </ListItemIcon>
             <ListItemText primary="Home" />
+          </NavLink>
+        </ListItem>
+        {isLoggedIn && (
+          <>
+            <ListItem>
+              <NavLink
+                to="/favourite"
+                className={({ isActive }) =>
+                  isActive ? styles.active : styles.inactive
+                }
+              >
+                <ListItemIcon>
+                  <FavoriteIcon />
+                </ListItemIcon>
+                <ListItemText primary="Favourite" />
+              </NavLink>
+            </ListItem>
+            <ListItem>
+              <NavLink
+                to="/watchLater"
+                className={({ isActive }) =>
+                  isActive ? styles.active : styles.inactive
+                }
+              >
+                <ListItemIcon>
+                  <WatchLaterIcon />
+                </ListItemIcon>
+                <ListItemText primary="Watch Later" />
+              </NavLink>
+            </ListItem>
+            <ListItem onClick={handleLogout}>
+              <ListItemIcon>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItem>
+          </>
+        )}
+        {!isLoggedIn && (
+          <ListItem component="a" href="/">
+            <ListItemIcon>
+              <LoginIcon />
+            </ListItemIcon>
+            <ListItemText primary="Login" />
           </ListItem>
         )}
       </List>
     </Box>
   );
 
-  const handleLogout = () => {
-    logoutUser();
-    setIsLoggedIn(false); // Update state after logging out
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <AppBar position="static">
         <Toolbar className={styles.toolbar}>
-          {/* Hamburger Menu for Mobile */}
           <IconButton
             edge="start"
             color="inherit"
@@ -178,30 +136,15 @@ const Navbar: React.FC = () => {
           <Drawer anchor="left" open={mobileOpen} onClose={toggleDrawer(false)}>
             {drawerContent}
           </Drawer>
-
-          {/* Brand Logo */}
           <Box className={styles.logoContainer}>
             <NavLink to="/" className={styles.logoLink}>
               <img
-                src="https://res.cloudinary.com/dtra3fmqb/image/upload/v1732991149/Creative_cjj4ei.png" // Replace with your logo path
+                src="https://res.cloudinary.com/dtra3fmqb/image/upload/v1732991149/Creative_cjj4ei.png"
                 alt="Brand Logo"
                 className={styles.logo}
               />
             </NavLink>
           </Box>
-
-          {/* Search Bar */}
-          <Search sx={{ flexGrow: 1 }}>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search movies"
-              inputProps={{ "aria-label": "search movies" }}
-            />
-          </Search>
-
-          {/* Navigation Links */}
           <Box
             sx={{
               flexGrow: 1,
@@ -210,16 +153,16 @@ const Navbar: React.FC = () => {
               gap: 2,
             }}
           >
-            {isLoggedIn ? (
+            <NavLink
+              to="/home"
+              className={({ isActive }) =>
+                isActive ? styles.active : styles.inactive
+              }
+            >
+              <Button startIcon={<HomeIcon />}>Home</Button>
+            </NavLink>
+            {isLoggedIn && (
               <>
-                <NavLink
-                  to="/home"
-                  className={({ isActive }) =>
-                    isActive ? styles.active : styles.inactive
-                  }
-                >
-                  <Button startIcon={<HomeIcon />}>Home</Button>
-                </NavLink>
                 <NavLink
                   to="/favourite"
                   className={({ isActive }) =>
@@ -237,23 +180,13 @@ const Navbar: React.FC = () => {
                   <Button startIcon={<WatchLaterIcon />}>Watch Later</Button>
                 </NavLink>
               </>
-            ) : (
-              <NavLink
-                to="/home"
-                className={({ isActive }) =>
-                  isActive ? styles.active : styles.inactive
-                }
-              >
-                <Button startIcon={<HomeIcon />}>Home</Button>
-              </NavLink>
             )}
           </Box>
-
-          {/* Right: Login/Logout */}
           <Box sx={{ display: { xs: "none", sm: "flex" } }}>
             {isLoggedIn ? (
               <Button
                 onClick={handleLogout}
+                startIcon={<LogoutIcon />}
                 style={{
                   color: "#5f9ea0",
                   border: "1px solid #5f9ea0",
@@ -264,6 +197,7 @@ const Navbar: React.FC = () => {
             ) : (
               <Button
                 href="/"
+                startIcon={<LoginIcon />}
                 style={{
                   color: "#5f9ea0",
                   border: "1px solid #5f9ea0",

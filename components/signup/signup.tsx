@@ -33,25 +33,31 @@ const Signup: React.FC = () => {
   });
   const [stayLoggedIn, setStayLoggedIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
-  // Check if the session cookie exists and is valid, redirect if valid
   useEffect(() => {
-    const sessionCookie = localStorage.getItem("session"); // Get session ID from localStorage
+    const sessionCookie = localStorage.getItem("session");
     if (sessionCookie) {
-      const isValid = verifyCookie(sessionCookie); // Verify the cookie
+      const isValid = verifyCookie(sessionCookie);
       if (isValid) {
-        navigate("/home"); // Redirect to home if the session cookie is valid
+        navigate("/home");
       }
     }
   }, [navigate]);
 
-  // Handle form submission
   const handleSubmit = async () => {
+    setError(null);
+    setUsernameError(null);
+    setEmailError(null);
+    setPasswordError(null);
+
     try {
       if (isSignupMode) {
-        // Sign Up Process
+        // Validate form data
         const validatedData = userSchema.parse(formData);
 
         // Check for unique email and username
@@ -63,8 +69,12 @@ const Signup: React.FC = () => {
           (user: any) => user.username === validatedData.username
         );
 
-        if (emailExists || usernameExists) {
-          setError("Email or username already exists");
+        if (emailExists) {
+          setEmailError("This email is already registered.");
+          return;
+        }
+        if (usernameExists) {
+          setUsernameError("This username is already taken.");
           return;
         }
 
@@ -72,21 +82,34 @@ const Signup: React.FC = () => {
         await createUser(
           {
             ...validatedData,
-            cookieSession: "", // Initially empty, to be set later
-            likedMovies: [], // Empty array for liked movies
-            watchLater: [], // Empty array for watch later
+            cookieSession: "",
+            likedMovies: [],
+            watchLater: [],
             stayLoggedIn,
           },
           stayLoggedIn
         );
 
-        setIsSignupMode(false); // Switch to login mode after signup
-        setError(null);
+        setIsSignupMode(false);
       } else {
-        // Login Process
+        // Validate login data
         const validatedData = userSchema
           .omit({ username: true })
           .parse(formData);
+
+        const users = await fetchAllUsers();
+        const user = users.find(
+          (user: any) => user.email === validatedData.email
+        );
+
+        if (!user) {
+          setEmailError("No account found with this email.");
+          return;
+        }
+        if (user.password !== validatedData.password) {
+          setPasswordError("Incorrect password. Please try again.");
+          return;
+        }
 
         await loginUser(
           validatedData.email,
@@ -94,22 +117,34 @@ const Signup: React.FC = () => {
           stayLoggedIn
         );
 
-        // Set the session cookie
         const sessionID = setCookie(stayLoggedIn);
-        localStorage.setItem("session", sessionID); // Store session ID in localStorage
-        console.log("User logged in and session cookie set:", sessionID);
+        localStorage.setItem("session", sessionID);
 
-        navigate("/home"); // Redirect to home
+        navigate("/home");
       }
-    } catch (err) {
-      setError("An unexpected error occurred");
-      console.error("Error during form submission:", err);
+    } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        err.errors.forEach((issue) => {
+          const field = issue.path[0];
+          if (field === "username") setUsernameError(issue.message);
+          if (field === "email") setEmailError(issue.message);
+          if (field === "password") setPasswordError(issue.message);
+        });
+      } else {
+        console.error("Unexpected error:", err);
+        setError("An unexpected error occurred. Please try again.");
+      }
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    // Clear specific errors as the user types
+    if (name === "username") setUsernameError(null);
+    if (name === "email") setEmailError(null);
+    if (name === "password") setPasswordError(null);
   };
 
   return (
@@ -126,6 +161,8 @@ const Signup: React.FC = () => {
           onChange={handleChange}
           className={styles.input}
           fullWidth
+          error={!!usernameError}
+          helperText={usernameError}
         />
       )}
 
@@ -136,6 +173,8 @@ const Signup: React.FC = () => {
         onChange={handleChange}
         className={styles.input}
         fullWidth
+        error={!!emailError}
+        helperText={emailError}
       />
 
       <TextField
@@ -146,6 +185,8 @@ const Signup: React.FC = () => {
         onChange={handleChange}
         className={styles.input}
         fullWidth
+        error={!!passwordError}
+        helperText={passwordError}
       />
 
       <FormControlLabel
@@ -158,7 +199,11 @@ const Signup: React.FC = () => {
         label="Stay logged in"
       />
 
-      {error && <Typography color="error">{error}</Typography>}
+      {error && (
+        <Typography color="error" style={{ marginTop: "8px" }}>
+          {error}
+        </Typography>
+      )}
 
       <Button
         variant="contained"
@@ -176,6 +221,9 @@ const Signup: React.FC = () => {
           setIsSignupMode((prev) => !prev);
           setFormData({ username: "", email: "", password: "" });
           setError(null);
+          setUsernameError(null);
+          setEmailError(null);
+          setPasswordError(null);
         }}
       >
         {isSignupMode

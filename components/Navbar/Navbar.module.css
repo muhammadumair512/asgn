@@ -25,28 +25,25 @@
   width: 100%;
   text-transform: capitalize;
 }
-/* 
-.active {
-  color: black;
-  text-decoration: none;
-}
-.inActive {
-  color: #83838c;
-  text-decoration: none;
-  list-style: none;
-} */
-/* Navbar.module.css */
 .navLink {
   text-decoration: none;
 }
 
 .active {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-decoration: none;
   color: #5f9ea0; /* Active button color */
   background-color: rgba(95, 158, 160, 0.2); /* Optional active background */
 }
 
 .inactive {
-  color: #ffffff; /* Default button color */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-decoration: none;
+  color: #030000; /* Default button color */
   background-color: transparent;
 }
 
@@ -69,8 +66,17 @@
 .navLink {
   /* background-color: red; */
   display: flex;
-  /* justify-content: space-between; */
   flex-direction: row;
   align-items: center;
+  /* justify-content: space-between; */
 }
 /* style={{ color: isActive ? "#FFFFFF" : "#83838c" }} */
+/* .drawer {
+  background-color: red;
+  display: flex;
+  flex-direction: column;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+} */
