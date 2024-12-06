@@ -36,6 +36,7 @@
   text-decoration: none;
   color: #5f9ea0; /* Active button color */
   background-color: rgba(95, 158, 160, 0.2); /* Optional active background */
+  width: 200px;
 }
 
 .inactive {
@@ -44,7 +45,7 @@
   align-items: center;
   text-decoration: none;
   color: #030000; /* Default button color */
-  background-color: transparent;
+  width: 200px;
 }
 
 .listItem {

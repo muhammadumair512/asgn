@@ -9,7 +9,9 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
-const mongoURI = "mongodb://localhost:27017/movieWeb"; // Replace 'yourDatabaseName' with your database name
+// const mongoURI = "mongodb://localhost:27017/movieWeb"; // Replace 'yourDatabaseName' with your database name
+const mongoURI =
+  "mongodb+srv://mumair299792458u:299792458um@cluster0.pp0lbva.mongodb.net/movieWeb"; // Replace 'yourDatabaseName' with your database name
 
 mongoose
   .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
