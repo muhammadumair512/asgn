@@ -206,8 +206,14 @@ const Signup: React.FC = () => {
       )}
 
       <Button
+        sx={{
+          backgroundColor: "black", // Black background
+          color: "white", // White text
+          "&:hover": {
+            backgroundColor: "#333", // Darker black on hover
+          },
+        }}
         variant="contained"
-        color="primary"
         onClick={handleSubmit}
         className={styles.button}
       >
