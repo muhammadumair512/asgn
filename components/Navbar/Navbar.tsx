@@ -14,7 +14,7 @@ import Menu from "@mui/icons-material/Menu";
 import Close from "@mui/icons-material/Close";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import WatchLaterIcon from "@mui/icons-material/WatchLater";
-import LoginIcon from "@mui/icons-material/Login";
+// import LoginIcon from "@mui/icons-material/Login";
 import HomeIcon from "@mui/icons-material/Home";
 import SearchIcon from "@mui/icons-material/Search";
 import { styled } from "@mui/material/styles";
@@ -23,7 +23,7 @@ import { NavLink } from "react-router-dom";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Cookies from "js-cookie";
 import { logoutUser } from "../../services/userService"; // Assuming you have this method in userService
-
+import { useDataContext } from "../../dataContext";
 const theme = createTheme({
   shape: {
     borderRadius: 28, // Set default border radius
@@ -69,10 +69,11 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const { user } = useDataContext();
   useEffect(() => {
     // console.log(user);
     const checkSessionCookie = () => {
+      console.log("this is navbar", user);
       const session = Cookies.get("session");
       setIsLoggedIn(!!session); // Update login state based on session cookie
     };
@@ -81,11 +82,11 @@ const Navbar: React.FC = () => {
     checkSessionCookie();
 
     // Set up an interval to check for cookie changes every second
-    const interval = setInterval(checkSessionCookie, 1000);
+    // const interval = setInterval(checkSessionCookie, 1000);
 
     // Cleanup interval on component unmount
-    return () => clearInterval(interval);
-  }, []);
+    // return () => clearInterval(interval);
+  }, [user]);
 
   const toggleDrawer = (open: boolean) => () => {
     setMobileOpen(open);

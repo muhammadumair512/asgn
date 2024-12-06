@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+
 import {
   getUserDataFromLocalStorage,
   toggleLikeMovie,
@@ -16,6 +18,7 @@ import {
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import WatchLaterIcon from "@mui/icons-material/WatchLater";
 import styles from "./Movies.module.css";
+import { useDataContext } from "../../dataContext";
 
 interface Movie {
   id: number;
@@ -30,7 +33,24 @@ interface Movie {
 const Movies: React.FC = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [userData, setUserData] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { setUser } = useDataContext();
+  useEffect(() => {
+    // console.log(user);
+    const checkSessionCookie = () => {
+      const session = Cookies.get("session");
+      setIsLoggedIn(!!session); // Update login state based on session cookie
+    };
 
+    // Initial check when the component mounts
+    checkSessionCookie();
+
+    // Set up an interval to check for cookie changes every second
+    const interval = setInterval(checkSessionCookie, 1000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
+  }, []);
   useEffect(() => {
     const loadMovies = async () => {
       try {
@@ -39,7 +59,7 @@ const Movies: React.FC = () => {
 
         if (user) {
           setUserData(user);
-
+          setUser(user);
           const updatedMovies = allMovies.map((movie) => ({
             ...movie,
             liked: user.likedMovies.includes(movie.id),
@@ -62,7 +82,7 @@ const Movies: React.FC = () => {
     };
 
     loadMovies();
-  }, []);
+  }, [setUser]);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -130,7 +150,7 @@ const Movies: React.FC = () => {
             <Typography className={styles.description}>
               {movie.description}
             </Typography>
-            {userData && (
+            {isLoggedIn && (
               <Box className={styles.footer}>
                 <IconButton onClick={() => handleFavoriteClick(movie.id)}>
                   <FavoriteIcon

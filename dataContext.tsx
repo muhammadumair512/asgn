@@ -1,4 +1,3 @@
-// src/context/DataContext.tsx
 import React, { createContext, useState, useContext, ReactNode } from "react";
 
 // Define User type
@@ -9,8 +8,8 @@ interface User {
 
 // Define the context type
 interface DataContextType {
-  user: User | null;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  user: User | null; // Update to match the User type
+  setUser: React.Dispatch<React.SetStateAction<User | null>>; // Correct type for setState
 }
 
 // Create the context with an empty state

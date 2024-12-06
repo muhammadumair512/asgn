@@ -11,6 +11,7 @@ import {
   toggleLaterMovie,
   fetchUserDataByEmail,
 } from "../../services/userService";
+import { useDataContext } from "../../dataContext";
 
 interface Movie {
   id: number;
@@ -29,8 +30,10 @@ const WatchLater = () => {
 
   const [userData, setUserData] = useState<any>(null);
   const [movies, setMovies] = useState<Movie[]>([]);
+  const { user } = useDataContext();
 
   useEffect(() => {
+    console.log("User from context via dataContext:", user);
     const fetchData = async () => {
       try {
         const user = getUserDataFromLocalStorage();
@@ -55,7 +58,7 @@ const WatchLater = () => {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   const handleFavoriteClick = async (movieId: number) => {
     if (!userData) return;
