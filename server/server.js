@@ -1,8 +1,8 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import Movie from "./models/Movie.js";
-import User from "./models/User.js";
+import Movie from "../models/Movie.js";
+import User from "../models/User.js";
 
 const app = express();
 app.use(cors());
