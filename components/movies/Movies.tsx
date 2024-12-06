@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { getUserDataFromLocalStorage } from "../../services/userService";
+import {
+  getUserDataFromLocalStorage,
+  toggleLikeMovie,
+  toggleLaterMovie,
+  fetchUserDataByEmail,
+  fetchAllMovies,
+} from "../../services/userService";
 import {
   Box,
   Typography,
@@ -7,10 +13,9 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import WatchLaterIcon from "@mui/icons-material/WatchLater";
 import styles from "./Movies.module.css";
-import { fetchAllMovies } from "../../services/userService";
 
 interface Movie {
   id: number;
@@ -18,7 +23,8 @@ interface Movie {
   imageURL: string;
   description: string;
   category: string;
-  liked: boolean;
+  liked: boolean; // Reflects whether the movie is liked by the user
+  watchLater: boolean; // Reflects whether the movie is added to Watch Later
 }
 
 const Movies: React.FC = () => {
@@ -28,8 +34,25 @@ const Movies: React.FC = () => {
   useEffect(() => {
     const loadMovies = async () => {
       try {
-        const data = await fetchAllMovies();
-        setMovies(data);
+        const allMovies = await fetchAllMovies();
+        const user = getUserDataFromLocalStorage();
+
+        if (user) {
+          setUserData(user);
+
+          const updatedMovies = allMovies.map((movie) => ({
+            ...movie,
+            liked: user.likedMovies.includes(movie.id),
+            watchLater: user.watchLater?.includes(movie.id) || false, // Ensure watchLater is handled
+          }));
+
+          setMovies(updatedMovies);
+        } else {
+          // Add default `watchLater` property to all movies if user is not logged in
+          setMovies(
+            allMovies.map((movie) => ({ ...movie, watchLater: false }))
+          );
+        }
       } catch (error: unknown) {
         console.error(
           "Error fetching movies:",
@@ -38,14 +61,6 @@ const Movies: React.FC = () => {
       }
     };
 
-    const getUserDetails = () => {
-      const user = getUserDataFromLocalStorage(); // Retrieve logged-in user data
-      if (user) {
-        setUserData(user);
-      }
-    };
-
-    getUserDetails();
     loadMovies();
   }, []);
 
@@ -53,54 +68,81 @@ const Movies: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
+  const handleFavoriteClick = async (movieId: number) => {
+    if (!userData) return;
+    // console.log("this is emial" + userData.email);
+    const updatedUser = await toggleLikeMovie(userData.email, movieId);
+
+    fetchUserDataByEmail(userData.email);
+    if (updatedUser) {
+      setUserData(updatedUser);
+
+      // Update movies state
+      setMovies((prevMovies) =>
+        prevMovies.map((movie) =>
+          movie.id === movieId
+            ? { ...movie, liked: !movie.liked } // Toggle liked state
+            : movie
+        )
+      );
+    }
+  };
+
+  const handleWatchLaterClick = async (movieId: number) => {
+    if (!userData) return;
+
+    const updatedUser = await toggleLaterMovie(userData.email, movieId);
+    fetchUserDataByEmail(userData.email);
+
+    if (updatedUser) {
+      setUserData(updatedUser);
+
+      // Update movies state
+      setMovies((prevMovies) =>
+        prevMovies.map((movie) =>
+          movie.id === movieId
+            ? { ...movie, watchLater: !movie.watchLater } // Toggle watchLater state
+            : movie
+        )
+      );
+    }
+  };
+
   return (
     <Box className={styles.container}>
-      {/* CSS Grid Layout */}
       <Box
         display="grid"
         gridTemplateColumns={
-          isMobile
-            ? "1fr" // 1 movie per row on mobile
-            : isTablet
-            ? "repeat(2, 1fr)" // 2 movies per row on tablets
-            : "repeat(4, 1fr)" // 4 movies per row on desktop
+          isMobile ? "1fr" : isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)"
         }
-        gap={theme.spacing(2)} // Consistent spacing
+        gap={theme.spacing(2)}
       >
         {movies.map((movie) => (
           <Box key={movie.id} className={styles.movieCard}>
-            {/* Movie Title */}
             <Typography variant="h6" className={styles.title}>
               {movie.title}
             </Typography>
-            {/* Movie Image */}
             <img
               src={movie.imageURL}
               alt={movie.title}
               className={styles.image}
             />
-            {/* Movie Description */}
             <Typography className={styles.description}>
               {movie.description}
             </Typography>
-            {/* Action Buttons */}
-            {userData && ( // Only render if userData is available (i.e., user is logged in)
+            {userData && (
               <Box className={styles.footer}>
-                <IconButton>
-                  <FavoriteBorderIcon
+                <IconButton onClick={() => handleFavoriteClick(movie.id)}>
+                  <FavoriteIcon
                     style={{
-                      fill: userData.likedMovies.includes(movie.id)
-                        ? "red"
-                        : "white",
+                      fill: movie.liked ? "red" : "white",
                     }}
                   />
                 </IconButton>
-                <IconButton>
+                <IconButton onClick={() => handleWatchLaterClick(movie.id)}>
                   <WatchLaterIcon
                     style={{
-                      fill: userData.watchLater.includes(movie.id)
-                        ? "red"
-                        : "white",
+                      fill: movie.watchLater ? "red" : "white",
                     }}
                   />
                 </IconButton>

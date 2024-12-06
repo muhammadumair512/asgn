@@ -1,7 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid"; // For generating unique session IDs
-
 const API_BASE_URL = "http://localhost:5000"; // Replace with your server URL
 
 // Function to set a cookie, generate a session ID, and return the session ID
@@ -173,17 +172,8 @@ export const loginUser = async (
 
     // Fetch additional user data based on the logged-in user's email
     const user1 = fetchUserDataByEmail(email);
+
     return user1;
-    // Update the context state with user data
-    // const { setUser } = UseData(); // Destructure setUser from the UseData hook
-    // setUser(fullUserData); // Update the context with the fetched user data
-
-    // Save user data in localStorage if the user chooses to stay logged in
-    // if (stayLoggedIn) {
-    //   localStorage.setItem("userData", JSON.stringify(fullUserData)); // Save full user data to localStorage
-    // }
-
-    // Return the full user data
   } catch (error: any) {
     console.error("Error logging in user:", error.message);
     if (error.response) {
@@ -269,5 +259,35 @@ export const logoutUser = (): void => {
     console.log("User logged out successfully.");
   } catch (error) {
     console.error("Error logging out user:", error);
+  }
+};
+export const toggleLikeMovie = async (
+  email: string,
+  movieId: number
+): Promise<User | null> => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/users/toggle-like`, {
+      email,
+      movieId,
+    });
+    return response.data; // Return updated user data
+  } catch (error) {
+    console.error("Error toggling movie like:", error);
+    return null;
+  }
+};
+export const toggleLaterMovie = async (
+  email: string,
+  movieId: number
+): Promise<User | null> => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/users/toggle-later`, {
+      email,
+      movieId,
+    });
+    return response.data; // Return updated user data
+  } catch (error) {
+    console.error("Error toggling movie watch latter:", error);
+    return null;
   }
 };

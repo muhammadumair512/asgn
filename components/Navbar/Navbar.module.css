@@ -25,7 +25,7 @@
   width: 100%;
   text-transform: capitalize;
 }
-
+/* 
 .active {
   color: black;
   text-decoration: none;
@@ -34,7 +34,26 @@
   color: #83838c;
   text-decoration: none;
   list-style: none;
+} */
+/* Navbar.module.css */
+.navLink {
+  text-decoration: none;
 }
+
+.active {
+  color: #5f9ea0; /* Active button color */
+  background-color: rgba(95, 158, 160, 0.2); /* Optional active background */
+}
+
+.inactive {
+  color: #ffffff; /* Default button color */
+  background-color: transparent;
+}
+
+.listItem {
+  color: inherit; /* Ensure it inherits the color */
+}
+
 .logoLink {
   text-decoration: none;
 }
@@ -54,3 +73,4 @@
   flex-direction: row;
   align-items: center;
 }
+/* style={{ color: isActive ? "#FFFFFF" : "#83838c" }} */

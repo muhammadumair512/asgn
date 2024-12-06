@@ -1,13 +1,26 @@
 import { useState, useEffect } from "react";
 import { Box, Typography, IconButton, useMediaQuery } from "@mui/material";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import WatchLaterIcon from "@mui/icons-material/WatchLater";
 import { useTheme } from "@mui/material/styles";
 import styles from "./favourite.module.css";
 import {
   getUserDataFromLocalStorage,
   fetchAllMovies,
+  toggleLikeMovie,
+  toggleLaterMovie,
+  fetchUserDataByEmail,
 } from "../../services/userService";
+
+interface Movie {
+  id: number;
+  title: string;
+  imageURL: string;
+  description: string;
+  category: string;
+  liked: boolean; // Reflects whether the movie is liked by the user
+  watchLater: boolean; // Reflects whether the movie is added to Watch Later
+}
 
 const Favourite = () => {
   const theme = useTheme();
@@ -15,79 +28,108 @@ const Favourite = () => {
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
   const [userData, setUserData] = useState<any>(null);
-  const [movies, setMovies] = useState<any[]>([]); // Initialize as an array
+  const [movies, setMovies] = useState<Movie[]>([]);
 
-  // Fetch user details and movies when the component mounts
   useEffect(() => {
     const fetchData = async () => {
-      const user = getUserDataFromLocalStorage(); // Retrieve logged-in user data
-      const moviesData = await fetchAllMovies(); // Fetch all movies
+      try {
+        const user = getUserDataFromLocalStorage();
+        const moviesData = await fetchAllMovies();
 
-      if (user) {
-        setUserData(user);
-      }
+        if (user) {
+          setUserData(user);
 
-      if (moviesData) {
-        setMovies(moviesData); // Set the fetched movies
+          const updatedMovies = moviesData.map((movie) => ({
+            ...movie,
+            liked: user.likedMovies.includes(movie.id),
+            watchLater: user.watchLater?.includes(movie.id) || false, // Ensure watchLater is handled
+          }));
+          setMovies(updatedMovies);
+        }
+      } catch (error) {
+        console.error(
+          "Error fetching data:",
+          error instanceof Error ? error.message : error
+        );
       }
     };
 
     fetchData();
   }, []);
 
-  // Filter the movies to only show those in the user's watchLater list
-  const filteredMovies = movies.filter((movie) =>
-    userData?.likedMovies?.includes(movie.id)
-  );
-  console.log(filteredMovies);
+  const handleFavoriteClick = async (movieId: number) => {
+    if (!userData) return;
+
+    const updatedUser = await toggleLikeMovie(userData.email, movieId);
+    fetchUserDataByEmail(userData.email);
+
+    if (updatedUser) {
+      setUserData(updatedUser);
+      setMovies((prevMovies) =>
+        prevMovies.map((movie) =>
+          movie.id === movieId
+            ? { ...movie, liked: !movie.liked } // Toggle liked state
+            : movie
+        )
+      );
+    }
+  };
+
+  const handleWatchLaterClick = async (movieId: number) => {
+    if (!userData) return;
+
+    const updatedUser = await toggleLaterMovie(userData.email, movieId);
+    fetchUserDataByEmail(userData.email);
+
+    if (updatedUser) {
+      setUserData(updatedUser);
+      setMovies((prevMovies) =>
+        prevMovies.map((movie) =>
+          movie.id === movieId
+            ? { ...movie, watchLater: !movie.watchLater } // Toggle watchLater state
+            : movie
+        )
+      );
+    }
+  };
+
+  const filteredMovies = movies.filter((movie) => movie.liked);
+
   return (
     <Box className={styles.container}>
-      {/* Replacing Grid with CSS Grid */}
       <Box
         display="grid"
         gridTemplateColumns={
-          isMobile
-            ? "1fr" // 1 movie per row on mobile
-            : isTablet
-            ? "repeat(2, 1fr)" // 2 movies per row on tablets
-            : "repeat(4, 1fr)" // 4 movies per row on desktop
+          isMobile ? "1fr" : isTablet ? "repeat(2, 1fr)" : "repeat(4, 1fr)"
         }
-        gap={theme.spacing(2)} // Ensures consistent spacing
+        gap={theme.spacing(2)}
       >
         {filteredMovies.length > 0 ? (
           filteredMovies.map((movie) => (
             <Box key={movie.id} className={styles.movieCard}>
-              {/* Title */}
               <Typography variant="h6" className={styles.title}>
                 {movie.title}
               </Typography>
-              {/* Image */}
               <img
                 src={movie.imageURL}
                 alt={movie.title}
                 className={styles.image}
               />
-              {/* Description */}
               <Typography className={styles.description}>
                 {movie.description}
               </Typography>
-              {/* Buttons */}
               <Box className={styles.footer}>
-                <IconButton>
-                  <FavoriteBorderIcon
+                <IconButton onClick={() => handleFavoriteClick(movie.id)}>
+                  <FavoriteIcon
                     style={{
-                      fill: userData.likedMovies.includes(movie.id)
-                        ? "red"
-                        : "white",
+                      fill: movie.liked ? "red" : "white",
                     }}
                   />
                 </IconButton>
-                <IconButton>
+                <IconButton onClick={() => handleWatchLaterClick(movie.id)}>
                   <WatchLaterIcon
                     style={{
-                      color: userData.watchLater.includes(movie.id)
-                        ? "red"
-                        : "white",
+                      color: movie.watchLater ? "red" : "white",
                     }}
                   />
                 </IconButton>
@@ -95,7 +137,9 @@ const Favourite = () => {
             </Box>
           ))
         ) : (
-          <Typography variant="h6">No movies in Watch Later list</Typography>
+          <Typography variant="h6">
+            No movies in your Favorites list.
+          </Typography>
         )}
       </Box>
     </Box>

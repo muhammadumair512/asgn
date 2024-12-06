@@ -1,15 +1,26 @@
-import React, { createContext, useContext, ReactNode, useState } from "react";
-import { User } from "./services/userService";
-// Update the DataContextType to store a User object instead of just a string
-interface DataContextType {
-  user: User | undefined; // Change this from string to User
-  setUser: React.Dispatch<React.SetStateAction<User | undefined>>; // Change this to accept User or undefined
+// src/context/DataContext.tsx
+import React, { createContext, useState, useContext, ReactNode } from "react";
+
+// Define User type
+interface User {
+  email: string;
+  // Add other user properties if needed
 }
 
+// Define the context type
+interface DataContextType {
+  user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+}
+
+// Create the context with an empty state
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-export const DataProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | undefined>(undefined); // Initialize state with User or undefined
+// Define the provider component
+export const DataProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(null);
 
   return (
     <DataContext.Provider value={{ user, setUser }}>
@@ -18,10 +29,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const UseData = () => {
+// Create a custom hook to use the context
+export const useDataContext = (): DataContextType => {
   const context = useContext(DataContext);
-  if (!context) {
-    throw new Error("useData must be used within a DataProvider");
+  if (context === undefined) {
+    throw new Error("useDataContext must be used within a DataProvider");
   }
   return context;
 };

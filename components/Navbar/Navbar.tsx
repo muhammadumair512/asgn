@@ -15,6 +15,7 @@ import Close from "@mui/icons-material/Close";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import WatchLaterIcon from "@mui/icons-material/WatchLater";
 import LoginIcon from "@mui/icons-material/Login";
+import HomeIcon from "@mui/icons-material/Home";
 import SearchIcon from "@mui/icons-material/Search";
 import { styled } from "@mui/material/styles";
 import styles from "./Navbar.module.css";
@@ -25,7 +26,7 @@ import { logoutUser } from "../../services/userService"; // Assuming you have th
 
 const theme = createTheme({
   shape: {
-    borderRadius: 28, // Set default border radius to 8px
+    borderRadius: 28, // Set default border radius
   },
 });
 
@@ -70,12 +71,20 @@ const Navbar: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const session = Cookies.get("session");
-    if (session) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
+    // console.log(user);
+    const checkSessionCookie = () => {
+      const session = Cookies.get("session");
+      setIsLoggedIn(!!session); // Update login state based on session cookie
+    };
+
+    // Initial check when the component mounts
+    checkSessionCookie();
+
+    // Set up an interval to check for cookie changes every second
+    const interval = setInterval(checkSessionCookie, 1000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, []);
 
   const toggleDrawer = (open: boolean) => () => {
@@ -90,46 +99,58 @@ const Navbar: React.FC = () => {
         </IconButton>
       </Box>
       <List>
-        <ListItem component="a">
-          <NavLink
-            to="/favourite"
-            className={({ isActive }) =>
-              isActive
-                ? `${styles.active} ${styles.navLink}`
-                : `${styles.inActive} ${styles.navLink}`
-            }
+        {isLoggedIn ? (
+          <>
+            <ListItem component="a">
+              <NavLink
+                to="/favourite"
+                className={({ isActive }) =>
+                  isActive
+                    ? `${styles.active} ${styles.navLink}`
+                    : `${styles.inActive} ${styles.navLink}`
+                }
+              >
+                <ListItemIcon>
+                  <FavoriteIcon />
+                </ListItemIcon>
+                <ListItemText primary="Favourite" className={styles.listItem} />
+              </NavLink>
+            </ListItem>
+            <ListItem component="a">
+              <NavLink
+                to="/watchLater"
+                className={({ isActive }) =>
+                  isActive
+                    ? `${styles.active} ${styles.navLink}`
+                    : `${styles.inActive} ${styles.navLink}`
+                }
+              >
+                <ListItemIcon>
+                  <WatchLaterIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Watch Later"
+                  className={styles.listItem}
+                />
+              </NavLink>
+            </ListItem>
+          </>
+        ) : (
+          <ListItem
+            component="a"
+            href="/"
+            style={{
+              cursor: "pointer",
+              color: "black",
+              textDecoration: "none",
+            }}
           >
             <ListItemIcon>
-              <FavoriteIcon />
+              <HomeIcon />
             </ListItemIcon>
-            <ListItemText primary="Favourite" className={styles.listItem} />
-          </NavLink>
-        </ListItem>
-        <ListItem component="a">
-          <NavLink
-            to="/watchLater"
-            className={({ isActive }) =>
-              isActive
-                ? `${styles.active} ${styles.navLink}`
-                : `${styles.inActive} ${styles.navLink}`
-            }
-          >
-            <ListItemIcon>
-              <WatchLaterIcon />
-            </ListItemIcon>
-            <ListItemText primary="Watch Later" className={styles.listItem} />
-          </NavLink>
-        </ListItem>
-        <ListItem
-          component="a"
-          href="/"
-          style={{ cursor: "pointer", color: "black", textDecoration: "none" }}
-        >
-          <ListItemIcon>
-            <LoginIcon />
-          </ListItemIcon>
-          <ListItemText primary="Login" />
-        </ListItem>
+            <ListItemText primary="Home" />
+          </ListItem>
+        )}
       </List>
     </Box>
   );
@@ -157,7 +178,6 @@ const Navbar: React.FC = () => {
             {drawerContent}
           </Drawer>
 
-          {/* Mobile: Search Bar in Center */}
           {/* Brand Logo */}
           <Box className={styles.logoContainer}>
             <NavLink to="/" className={styles.logoLink}>
@@ -168,26 +188,9 @@ const Navbar: React.FC = () => {
               />
             </NavLink>
           </Box>
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: { xs: "flex", sm: "none" },
-              justifyContent: "center",
-            }}
-          >
-            <Search>
-              <SearchIconWrapper>
-                <SearchIcon />
-              </SearchIconWrapper>
-              <StyledInputBase
-                placeholder="Search movies"
-                inputProps={{ "aria-label": "search movies" }}
-              />
-            </Search>
-          </Box>
 
-          {/* Left: Search Bar on Larger Screens */}
-          <Search sx={{ display: { xs: "none", sm: "block" } }}>
+          {/* Search Bar */}
+          <Search sx={{ flexGrow: 1 }}>
             <SearchIconWrapper>
               <SearchIcon />
             </SearchIconWrapper>
@@ -197,7 +200,7 @@ const Navbar: React.FC = () => {
             />
           </Search>
 
-          {/* Center: Navigation Links */}
+          {/* Navigation Links */}
           <Box
             sx={{
               flexGrow: 1,
@@ -206,61 +209,64 @@ const Navbar: React.FC = () => {
               gap: 2,
             }}
           >
-            <NavLink
-              to="/favourite"
-              className={({ isActive }) =>
-                isActive ? styles.active : styles.inactive
-              }
-            >
-              {({ isActive }) => (
-                <Button
-                  startIcon={<FavoriteIcon />}
-                  style={{ color: isActive ? "#FFFFFF" : "#83838c" }}
-                  href="/favourite"
+            {isLoggedIn ? (
+              <>
+                <NavLink
+                  to="/home"
+                  className={({ isActive }) =>
+                    isActive ? styles.active : styles.inactive
+                  }
                 >
-                  Favourite
-                </Button>
-              )}
-            </NavLink>
-            <NavLink
-              to="/watchLater"
-              className={({ isActive }) =>
-                isActive ? styles.active : styles.inactive
-              }
-            >
-              {({ isActive }) => (
-                <Button
-                  startIcon={<WatchLaterIcon />}
-                  style={{ color: isActive ? "#FFFFFF" : "#83838c" }}
-                  href="/watchLater"
+                  <Button startIcon={<HomeIcon />}>Home</Button>
+                </NavLink>
+                <NavLink
+                  to="/favourite"
+                  className={({ isActive }) =>
+                    isActive ? styles.active : styles.inactive
+                  }
                 >
-                  Watch Later
-                </Button>
-              )}
-            </NavLink>
+                  <Button startIcon={<FavoriteIcon />}>Favourite</Button>
+                </NavLink>
+                <NavLink
+                  to="/watchLater"
+                  className={({ isActive }) =>
+                    isActive ? styles.active : styles.inactive
+                  }
+                >
+                  <Button startIcon={<WatchLaterIcon />}>Watch Later</Button>
+                </NavLink>
+              </>
+            ) : (
+              <NavLink
+                to="/home"
+                className={({ isActive }) =>
+                  isActive ? styles.active : styles.inactive
+                }
+              >
+                <Button startIcon={<HomeIcon />}>Home</Button>
+              </NavLink>
+            )}
           </Box>
 
-          {/* Right: Login/Logout Button */}
+          {/* Right: Login/Logout */}
           <Box sx={{ display: { xs: "none", sm: "flex" } }}>
             {isLoggedIn ? (
               <Button
+                onClick={handleLogout}
                 style={{
                   color: "#5f9ea0",
                   border: "1px solid #5f9ea0",
-                  width: 100,
                 }}
-                onClick={handleLogout}
               >
                 Logout
               </Button>
             ) : (
               <Button
+                href="/"
                 style={{
                   color: "#5f9ea0",
                   border: "1px solid #5f9ea0",
-                  width: 100,
                 }}
-                href="/"
               >
                 Login
               </Button>

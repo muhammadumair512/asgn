@@ -118,3 +118,56 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+// API to toggle movie like
+app.post("/users/toggle-like", async (req, res) => {
+  const { email, movieId } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const movieIndex = user.likedMovies.indexOf(movieId);
+
+    if (movieIndex === -1) {
+      user.likedMovies.push(movieId); // Add movie if not present
+    } else {
+      user.likedMovies.splice(movieIndex, 1); // Remove movie if present
+    }
+
+    await user.save(); // Save the updated user document
+    res.json(user); // Return updated user data
+  } catch (error) {
+    console.error("Error toggling movie like:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+// API to toggle movie latter
+app.post("/users/toggle-later", async (req, res) => {
+  const { email, movieId } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const movieIndex = user.watchLater.indexOf(movieId);
+
+    if (movieIndex === -1) {
+      user.watchLater.push(movieId); // Add movie if not present
+    } else {
+      user.watchLater.splice(movieIndex, 1); // Remove movie if present
+    }
+
+    await user.save(); // Save the updated user document
+    res.json(user); // Return updated user data
+  } catch (error) {
+    console.error("Error toggling movie watchLater:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
