@@ -1,12 +1,13 @@
+// src/pages/Movies.tsx
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
-
 import {
   getUserDataFromLocalStorage,
   toggleLikeMovie,
   toggleLaterMovie,
-  fetchUserDataByEmail,
+  // fetchUserDataByEmail,
   fetchAllMovies,
+  fetchUserDataByEmail,
 } from "../../services/userService";
 import {
   Box,
@@ -40,6 +41,11 @@ const Movies: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { setUser } = useDataContext();
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+
+  // Check user login status
   useEffect(() => {
     const checkSessionCookie = () => {
       const session = Cookies.get("session");
@@ -48,10 +54,10 @@ const Movies: React.FC = () => {
 
     checkSessionCookie();
     const interval = setInterval(checkSessionCookie, 1000);
-
     return () => clearInterval(interval);
-  }, []);
+  }, [setUser]);
 
+  // Fetch movies and user data
   useEffect(() => {
     const loadMovies = async () => {
       try {
@@ -61,6 +67,7 @@ const Movies: React.FC = () => {
         if (user) {
           setUserData(user);
           setUser(user);
+
           const updatedMovies = allMovies.map((movie) => ({
             ...movie,
             liked: user.likedMovies.includes(movie.id),
@@ -77,17 +84,15 @@ const Movies: React.FC = () => {
             allMovies.map((movie) => ({ ...movie, watchLater: false }))
           );
         }
-      } catch (error: unknown) {
-        console.error(
-          "Error fetching movies:",
-          error instanceof Error ? error.message : error
-        );
+      } catch (error) {
+        console.error("Error fetching movies:", error);
       }
     };
 
     loadMovies();
   }, [setUser]);
 
+  // Filter movies based on search term
   useEffect(() => {
     const filtered = movies.filter((movie) =>
       movie.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -95,40 +100,53 @@ const Movies: React.FC = () => {
     setFilteredMovies(filtered);
   }, [searchTerm, movies]);
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+  // Optimistic UI update function
+  const updateMovieState = (
+    movieId: number,
+    field: "liked" | "watchLater",
+    value: boolean
+  ) => {
+    setMovies((prevMovies) =>
+      prevMovies.map((movie) =>
+        movie.id === movieId ? { ...movie, [field]: value } : movie
+      )
+    );
+  };
 
   const handleFavoriteClick = async (movieId: number) => {
     if (!userData) return;
-    const updatedUser = await toggleLikeMovie(userData.email, movieId);
-    fetchUserDataByEmail(userData.email);
 
-    if (updatedUser) {
+    const currentMovie = movies.find((movie) => movie.id === movieId);
+    if (!currentMovie) return;
+
+    const newLikedState = !currentMovie.liked;
+    updateMovieState(movieId, "liked", newLikedState);
+    try {
+      const updatedUser = await toggleLikeMovie(userData.email, movieId);
       setUserData(updatedUser);
-      setMovies((prevMovies) =>
-        prevMovies.map((movie) =>
-          movie.id === movieId ? { ...movie, liked: !movie.liked } : movie
-        )
-      );
+      fetchUserDataByEmail(userData.email);
+    } catch (error) {
+      console.error("Failed to update liked status:", error);
+      updateMovieState(movieId, "liked", !newLikedState); // Revert state on error
     }
   };
 
   const handleWatchLaterClick = async (movieId: number) => {
     if (!userData) return;
 
-    const updatedUser = await toggleLaterMovie(userData.email, movieId);
-    fetchUserDataByEmail(userData.email);
+    const currentMovie = movies.find((movie) => movie.id === movieId);
+    if (!currentMovie) return;
 
-    if (updatedUser) {
+    const newWatchLaterState = !currentMovie.watchLater;
+    updateMovieState(movieId, "watchLater", newWatchLaterState);
+
+    try {
+      const updatedUser = await toggleLaterMovie(userData.email, movieId);
       setUserData(updatedUser);
-      setMovies((prevMovies) =>
-        prevMovies.map((movie) =>
-          movie.id === movieId
-            ? { ...movie, watchLater: !movie.watchLater }
-            : movie
-        )
-      );
+      fetchUserDataByEmail(userData.email);
+    } catch (error) {
+      console.error("Failed to update watchLater status:", error);
+      updateMovieState(movieId, "watchLater", !newWatchLaterState); // Revert state on error
     }
   };
 
