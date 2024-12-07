@@ -1,7 +1,9 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid"; // For generating unique session IDs
-const API_BASE_URL = "http://localhost:5000"; // Replace with your server URL
+const API_BASE_URL =
+"https://movie-server-opal.vercel.app"
+// "http://localhost:5000"; // Replace with your server URL
 
 // Function to set a cookie, generate a session ID, and return the session ID
 export const setCookie = (stayLoggedIn: boolean): string => {
